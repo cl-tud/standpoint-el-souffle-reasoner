@@ -1,0 +1,32 @@
+// ABox assertions
+
+.type IndividualName <: symbol
+
+// a given symbol is known to be an individual name
+.decl is_in(n: IndividualName)
+
+// there are two forms of ABox assertions
+.type Assertion = ConceptAssertion { c: ConceptTerm, a: IndividualName }
+                | RoleAssertion { r: RoleName, a1: IndividualName, a2: IndividualName }
+
+// introduce further predicates for internal handling
+// here we also extract and register the vocabulary elements
+// the box modality is implicit in each case
+
+// ca for concept assertion
+.decl ca(s: StandpointName, c: ConceptTerm, a: IndividualName)
+
+ca(s, c, a) :- kb($Formula($Box(), s, $Lit($Pos($ABox($ConceptAssertion(c, a)))))).
+is_sn(s), is_ct(c), is_in(a) :- ca(s, c, a).
+
+// ra for role assertion
+.decl ra(s: StandpointName, r: RoleName, a1: IndividualName, a2: IndividualName)
+
+ra(s, r, a1, a2) :- kb($Formula($Box(), s, $Lit($Pos($ABox($RoleAssertion(r, a1, a2)))))).
+is_sn(s), is_rn(r), is_in(a1), is_in(a2) :- ra(s, r, a1, a2).
+
+// name building
+.decl abox_axiom2name(a: Assertion, n: symbol)
+
+abox_axiom2name($ConceptAssertion(c, a), name) :- is_abox_axiom($ConceptAssertion(c, a)), ct2name(c, cn), name=cat(cn, cat("(", cat(a, ")"))).
+abox_axiom2name($RoleAssertion(r, a, b), name) :- is_abox_axiom($RoleAssertion(r, a, b)), name=cat(r, cat("(", cat(a, cat(",", cat(b, ")"))))).

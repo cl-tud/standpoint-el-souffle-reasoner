@@ -1,0 +1,2 @@
+$Formula($Diamond, s, $And($Pos($ABox($ConceptAssertion($Atomic(C), a))), $Lit($Pos($ABox($RoleAssertion(r, a, b))))))
+$Formula($Box, all, $Lit($Pos($TBox($GCI($Atomic(C), $Atomic(D))))))

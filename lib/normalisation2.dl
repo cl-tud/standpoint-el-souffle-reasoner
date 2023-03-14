@@ -1,0 +1,189 @@
+#include "normalisation1.dl"
+
+// Normalisation of sharpening statements
+
+sharper_nf(s1, s2) :- sharper_intersection($Name(s1), s2).
+
+// s1 /\ s2 <= s3
+.decl sharper_intersection_nf(s1: StandpointName, s2: StandpointName, s3: StandpointName)
+
+.output sharper_intersection_nf
+
+sharper_intersection_nf(s1, s2, s3) :- sharper_intersection($Intersection(s1, $Name(s2)), s3).
+
+// introduce new standpoint name for intersection of s1 and s2
+sharper_intersection($Intersection(s1, $Name(s2)), new), 
+sharper_intersection($Intersection(new, s3), s)
+:- sharper_intersection($Intersection(s1, $Intersection(s2, s3)), s), new=cat("_", cat(s1, cat("_", s2))).
+
+// initiate recursion with top concept as neutral conjunct
+.decl normalise_sharper_disjointness(s: StandpointExpression, c: ConceptTerm)
+
+normalise_sharper_disjointness(s, $Top()) :- sharper_disjointness(s).
+
+// end recursion when at standpoint name
+
+is_cn(new),
+gci(s, $Top(), $Atomic(new)),
+gci(all, $Conjunction($Atomic(new), c), $Bottom())
+:- normalise_sharper_disjointness($Name(s), c), new=cat("c_", s), is_all(all).
+
+// do recursion as long as not at standpoint name
+
+is_cn(new),
+gci(s1, $Top(), $Atomic(new)),
+normalise_sharper_disjointness(s2, $Conjunction($Atomic(new), c))
+:- normalise_sharper_disjointness($Intersection(s1, s2), c), new=cat("c_", s1).
+
+// Normalisation of role inclusion axioms
+
+// role name on the left:
+// l <= r
+.decl ria2(s: StandpointName, l: RoleName, r: RoleName)
+
+.output ria2
+
+// the box modality is still implicit in the normal form
+ria2(s, l, r) :- ria(s, $Single(l), r).
+
+// role chains on the left:
+// l1 * l2 <= r
+.decl ria3(s: StandpointName, l1: RoleName, l2: RoleName, r: RoleName)
+
+.output ria3
+
+ria3(s, l1, l2, r) :- ria(s, $Chain(l1, $Single(l2)), r).
+
+// longer role chains on the left will be normalised “away”
+is_rn(new),
+ria(s, $Chain(l1, $Single(l2)), new),
+ria(s, $Chain(new, l3), r)
+:- ria(s, $Chain(l1, $Chain(l2, l3)), r), new=cat("r_", cat(l1, cat("_", l2))).
+
+// normalising GCIs
+
+// existential right
+is_cn(cn),
+gci(s, b, $Existential(r, $Atomic(cn))),
+gci(s, $Atomic(cn), c)
+:- gci(s, b, $Existential(r, c)), is_cc(c), ct2name(c, cn).
+
+// conjunction right
+is_cn(cdn),
+gci(s, b, $Atomic(cdn)),
+gci(s, $Atomic(cdn), c),
+gci(s, $Atomic(cdn), d)
+:- gci(s, b, $Conjunction(c, d)), ct2name($Conjunction(c, d), cdn).
+
+// modality right
+is_cn(dn),
+gci(s, c, $Modal(m, u, $Atomic(dn))),
+gci(s, $Atomic(dn), d)
+:- gci(s, c, $Modal(m, u, d)), is_cc(d), ct2name(d, dn).
+
+// existential left
+is_cn(cn),
+gci(s, c, $Atomic(cn)),
+gci(s, $Existential(r, $Atomic(cn)), d)
+:- gci(s, $Existential(r, c), d), is_cc(c), ct2name(c, cn).
+
+// conjunction left, left conjunct complex
+is_cn(cn),
+gci(s, c, $Atomic(cn)),
+gci(s, $Conjunction($Atomic(cn), d), e)
+:- gci(s, $Conjunction(c, d), e), is_cc(c), ct2name(c, cn).
+
+// conjunction left, right conjunct complex
+is_cn(dn),
+gci(s, d, $Atomic(dn)),
+gci(s, $Conjunction($Atomic(c), $Atomic(dn)), e)
+:- gci(s, $Conjunction($Atomic(c), d), e), is_cc(d), ct2name(d, dn).
+
+// diamond left
+is_cn(new),
+gci(u, c, $Modal($Box(), all, $Atomic(new))),
+gci(s, $Atomic(new), d)
+:- gci(s, $Modal($Diamond(), u, c), d), is_all(all), ct2name(c, cn), new=cat("c_", cat(u, cat("_", cn))).
+
+// box left
+is_sn(v0),
+is_sn(v1),
+is_cn(new),
+sharper_nf(v0, u),
+sharper_nf(v1, u),
+gci(u, c, $Atomic(new)),
+gci(s, $Conjunction($Modal($Diamond(), v0, $Atomic(new)), $Modal($Diamond(), v1, $Atomic(new))), d)
+:- gci(s, $Modal($Box(), u, c), d), ct2name(c, cn), v0=cat("s_", cat(u, cat("_", cat(cn, "_0")))), v1=cat("s_", cat(u, cat("_", cat(cn, "_1")))), new=cat("c_", cat(u, cat("_", cn))).
+
+// recognise GCIs in normal form and output them
+.decl gci_nf(s: StandpointName, l: ConceptTerm, r: ConceptTerm)
+
+// one general predicate for output
+.output gci_nf
+
+// several specific predicates for reasoning
+
+// concept names on both sides
+.decl gci_nf_names(s: StandpointName, l: ConceptName, r: ConceptName)
+
+gci_nf_names(s, cn, dn),
+gci_nf(s, c, d)
+:- gci(s, c, d), bc2name(c, cn), bc2name(d, dn).
+
+// box right
+.decl gci_nf_box_right(c: ConceptName, s: StandpointName, d: ConceptName)
+
+gci_nf_box_right(cn, s, dn),
+gci_nf(all, c, $Modal($Box(), s, d))
+:- gci(all, c, $Modal($Box(), s, d)), bc2name(c, cn), bc2name(d, dn), is_all(all).
+
+// diamond right
+.decl gci_nf_diamond_right(u: StandpointName, c: ConceptName, s: StandpointName, d: ConceptName)
+
+gci_nf_diamond_right(u, cn, s, dn),
+gci_nf(u, c, $Modal($Diamond(), s, d))
+:- gci(u, c, $Modal($Diamond(), s, d)), bc2name(c, cn), bc2name(d, dn).
+
+// conjunction left
+.decl gci_nf_conjunction_left(s: StandpointName, c: ConceptName, d: ConceptName, e: ConceptName)
+
+gci_nf_conjunction_left(s, cn, dn, en),
+gci_nf(s, $Conjunction(c, d), e)
+:- gci(s, $Conjunction(c, d), e), bc2name(c, cn), bc2name(d, dn), bc2name(e, en).
+
+// existential right
+.decl gci_nf_existential_right(s: StandpointName, c: ConceptName, r: RoleName, d: ConceptName)
+
+gci_nf_existential_right(s, cn, r, dn),
+gci_nf(s, c, $Existential(r, d))
+:- gci(s, c, $Existential(r, d)), bc2name(c, cn), bc2name(d, dn).
+
+// existential left
+.decl gci_nf_existential_left(s: StandpointName, r: RoleName, c: ConceptName, d: ConceptName)
+
+gci_nf_existential_left(s, r, cn, dn),
+gci_nf(s, $Existential(r, c), d)
+:- gci(s, $Existential(r, c), d), bc2name(c, cn), bc2name(d, dn).
+
+
+// normalising assertions
+// concept assertion normal form: the box modality is still implicit
+
+.decl ca_nf(s: StandpointName, c: ConceptName, a: IndividualName)
+
+.output ca_nf
+
+ca_nf(s, c, a) :- ca(s, $Atomic(c), a).
+
+is_cn(new),
+ca_nf(s, new, a),
+gci(s, $Atomic(new), c)
+:- ca(s, c, a), is_cc(c), ct2name(c, new).
+
+// role assertion normal form: the box is still implicit
+.decl ra_nf(s: StandpointName, r: RoleName, a1: IndividualName, a2: IndividualName)
+
+.output ra_nf
+
+ra_nf(s, r, a1, a2) :- ra(s, r, a1, a2).
+

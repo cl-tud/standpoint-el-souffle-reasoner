@@ -1,0 +1,49 @@
+// SBox statements
+
+// standpoint names
+// StandpointName cannot be a subtype of symbol because we want to introduce new names later
+.type StandpointName = symbol
+
+// there are two different forms of standpoint expressions: standpoint names, and intersections of standpoint names
+// we have to use a constructor in every branch
+.type StandpointExpression = Name { s:StandpointName }
+                           | Intersection { s1: StandpointName, s2: StandpointExpression }
+
+// there are two different forms of sharpening statements: a standpoint name or the “empty set” on the right-hand side; both have an intersection on the left-hand side
+// “ordinary” sharpening statements s1 <= s2 are supposed to be modelled via $SharperIntersection($Name(s1), s2)
+.type SharpeningStatement = SharperIntersection { l:StandpointExpression, r:StandpointName }
+                          | SharperDisjointness { l:StandpointExpression }
+
+// predicates for recognising syntax elements
+.decl is_sn(s: StandpointName)
+
+.decl is_se(e: StandpointExpression)
+
+// rules for extracting vocabulary elements
+is_sn(s) :- is_se($Name(s)).
+is_sn(s1), is_se(s2) :- is_se($Intersection(s1, s2)).
+
+// obtain names for expressions
+.decl se2name(se: StandpointExpression, sn: StandpointName)
+
+se2name($Name(s), s) :- is_se($Name(s)).
+se2name($Intersection(s, se), name) :- is_se($Intersection(s, se)), se2name(se, sename), name=cat(s, cat("&", sename)).
+
+// fixing some special symbol for the universal standpoint
+// take care to only use the predicate to access it (rather than hard-code the string)
+.decl is_all(s: StandpointName)
+is_all("all").
+is_sn(all) :- is_all(all).
+
+// predicates for different types of sharpening statements, for internal usage
+// along the way, we also extract the vocabulary
+
+.decl sharper_intersection(l: StandpointExpression, r: StandpointName)
+
+sharper_intersection(l, r) :- kb($PosSharp($SharperIntersection(l, r))).
+is_se(l), is_sn(r) :- sharper_intersection(l, r).
+
+.decl sharper_disjointness(l: StandpointExpression)
+
+sharper_disjointness(l) :- kb($PosSharp($SharperDisjointness(l))).
+is_se(l) :- sharper_disjointness(l).

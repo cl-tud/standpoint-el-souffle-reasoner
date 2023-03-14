@@ -1,0 +1,101 @@
+#include "types.dl"
+
+// s1 <= s2
+.decl sharper_nf(s1: StandpointName, s2: StandpointName)
+
+.output sharper_nf
+
+// (11)
+// remove diamonds in front of monomials
+
+is_sn(new),
+sharper_nf(new, s),
+kb($Formula($Box(), new, m))
+:- kb($Formula($Diamond(), s, m)), formula2name($Formula($Diamond(), s, m), fn), new=cat("s_", fn).
+
+// (12)
+// push boxes around monomials down to literals
+
+kb($Formula($Box(), s, $Lit(l))),
+kb($Formula($Box(), s, m))
+:- kb($Formula($Box(), s, $And(l, m))).
+
+// (13)
+// compile away negation from negated GCI
+
+gci(s, $Atomic(newA), c),
+gci(s, $Conjunction($Atomic(newA), d), $Bottom()),
+gci(s, $Top(), $Existential(newR, $Atomic(newA)))
+:- kb($Formula($Box(), s, $Lit($Neg($TBox($GCI(c, d)))))), formula2name($Formula($Box(), s, $Lit($Neg($TBox($GCI(c, d))))), fn), newA=cat("c_", fn), newR=cat("r_", fn).
+
+// (14)
+// compile away negation from negated concept assertion
+gci(s, $Conjunction($Atomic(new), c), $Bottom()),
+ca(s, $Atomic(new), a)
+:- kb($Formula($Box(), s, $Lit($Neg($ABox($ConceptAssertion(c, a)))))), ct2name(c, cname), new=cat("c_", cname).
+
+// (15)
+// compile away negation from negated role assertion
+ca(s, $Atomic(newA), a),
+ca(s, $Atomic(newB), b),
+gci(s, $Conjunction($Atomic(newA), $Existential(r, $Atomic(newB))), $Bottom())
+:- kb($Formula($Box(), s, $Lit($Neg($ABox($RoleAssertion(r, a, b)))))), newA=cat("c_", cat(a, cat(r, cat(a, b)))), newB=cat("c_", cat(b, cat(r, cat(a, b)))).
+
+// (16)
+// compile away negation from negated RIA
+kb($Formula($Box(), s, $Lit($Pos($TBox($GCI($Top(), $Existential(newR, $Atomic(newA)))))))),
+kb($Formula($Box(), s, $Lit($Pos($TBox($GCI($Conjunction($Atomic(newA), $Existential(newR, $Atomic(newB))), $Bottom())))))),
+kb($Formula($Box(), s, $Lit($Pos($TBox($GCI($Atomic(newA), existential))))))
+:- kb($Formula($Box(), s, $Lit($Neg($TBox($RIA(chain, r)))))), formula2name($Formula($Box(), s, $Lit($Neg($TBox($RIA(chain, r))))), fn), newA=cat("c_", cat(fn, "_1")), newR=cat("r_", cat(fn, "_3")), get_chain_existential(chain, newB), chain2existential(chain, existential).
+
+// helper predicates for transforming role chains into nested existential restrictions
+
+// announce that existential from chain is needed
+.decl get_chain_existential(rc: RoleChain, b: ConceptName)
+
+get_chain_existential(chain, newB) :- kb($Formula($Box(), s, $Lit($Neg($TBox($RIA(chain, r)))))), formula2name($Formula($Box(), s, $Lit($Neg($TBox($RIA(chain, r))))), fn), newB=cat("c_", cat(fn, "_2")).
+
+.type RoleList = [
+    head: RoleName,
+    rest: RoleList
+]
+
+// reverse order of role names in chain to create proper nesting of existentials in concept term
+.decl get_reverse(rc: RoleChain)
+
+get_reverse(chain) :- get_chain_existential(chain, _).
+
+.decl reverse(main: RoleName, chain: RoleChain, rev: RoleList)
+
+reverse(name, chain, nil) :- get_reverse(chain), rc2name(chain, name).
+reverse(main, $Empty(), [role, list]) :- reverse(main, $Single(role), list).
+reverse(main, chain, [role, list]) :- reverse(main, $Chain(role, chain), list).
+
+
+// obtain concept term for role chain when needed
+.decl get_chain_existential_reverse(chain: RoleChain, list: RoleList, b: ConceptTerm)
+
+get_chain_existential_reverse(chain, reverse, $Atomic(b))
+:- get_chain_existential(chain, b), reverse(name, $Empty(), reverse), rc2name(chain, name).
+
+.decl chain2existential(rc: RoleChain, ex: ConceptTerm)
+
+chain2existential(chain, concept) :- get_chain_existential_reverse(chain, nil, concept).
+get_chain_existential_reverse(chain, list, $Existential(role, concept)) :- get_chain_existential_reverse(chain, [role, list], concept).
+
+// (17)
+// compile away negation from negated sharpening statements
+.decl get_sharpenings(ex: StandpointExpression, name: StandpointName)
+
+kb($PosSharp($SharperDisjointness($Intersection(new, $Name(right))))),
+get_sharpenings(left, new)
+:- kb($NegSharp($SharperIntersection(left, right))), se2name(left, lname), new=cat("s_", cat(lname, cat("-", right))).
+
+get_sharpenings(left, new) :- kb($NegSharp($SharperDisjointness(left))), se2name(left, lname), new=cat("s_not_", lname).
+
+// base case
+sharper_nf(new, s) :- get_sharpenings($Name(s), new).
+// recursive case
+sharper_nf(new, s),
+get_sharpenings(se, new)
+:- get_sharpenings($Intersection(s, se), new).

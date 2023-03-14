@@ -1,0 +1,77 @@
+#include "types.sbox.dl"
+#include "types.tbox.dl"
+#include "types.abox.dl"
+
+// there are two types of axioms:
+// (TBox) axioms and (ABox) assertions 
+.type Axiom = ABox { a: Assertion }
+            | TBox { t: TBoxAxiom }
+
+// a literal is an axiom or a negated axiom
+.type Literal = Pos { a: Axiom }
+              | Neg { a: Axiom }
+
+// a monomial is a conjunction of literals
+.type Monomial = Lit { l: Literal }
+               | And { l: Literal, m: Monomial }
+
+// a statement is a formula (a modalised monomial) or a (possibly negated) sharpening statement
+.type Statement = Formula { mod: Modality, s: StandpointName, mon: Monomial }
+                | PosSharp { s: SharpeningStatement }
+                | NegSharp { s: SharpeningStatement }
+
+// knowledge bases are provided externally
+.decl kb(st: Statement)
+
+.input kb
+
+// and decomposed to access the constituents for name building
+.decl is_formula(st: Statement)
+
+is_formula($Formula(m, s, f)) :- kb($Formula(m, s, f)).
+
+.decl is_monomial(m: Monomial)
+
+is_sn(s),
+is_monomial(m)
+:- is_formula($Formula(_, s, m)).
+
+.decl is_literal(l: Literal)
+
+is_literal(l) :- is_monomial($Lit(l)).
+is_literal(l),
+is_monomial(m)
+:- is_monomial($And(l, m)).
+
+.decl is_axiom(a: Axiom)
+
+is_axiom(a) :- is_literal($Pos(a)).
+is_axiom(a) :- is_literal($Neg(a)).
+
+.decl is_abox_axiom(a: Assertion)
+
+is_abox_axiom(a) :- is_axiom($ABox(a)).
+
+.decl is_tbox_axiom(t: TBoxAxiom)
+
+is_tbox_axiom(t) :- is_axiom($TBox(t)).
+
+// actual name building
+.decl axiom2name(a: Axiom, n: symbol)
+
+axiom2name($TBox(a), n) :- is_axiom($TBox(a)), tbox_axiom2name(a, n).
+axiom2name($ABox(a), n) :- is_axiom($ABox(a)), abox_axiom2name(a, n).
+
+.decl literal2name(l: Literal, n: symbol)
+
+literal2name($Pos(a), name) :- axiom2name(a, n), name=cat("+", n).
+literal2name($Neg(a), name) :- axiom2name(a, n), name=cat("-", n).
+
+.decl monomial2name(m: Monomial, n: symbol)
+
+monomial2name($Lit(l), n) :- is_monomial($Lit(l)), literal2name(l, n).
+monomial2name($And(l, m), name) :- is_monomial($And(l, m)), monomial2name(m, mn), literal2name(l, ln), name=cat(ln, cat("/\\", mn)).
+
+.decl formula2name(f: Statement, n: symbol)
+
+formula2name($Formula(mod, s, mon), name) :- is_formula($Formula(mod, s, mon)), monomial2name(mon, moname), md2name(mod, s, modname), name=cat(modname, moname).

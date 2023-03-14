@@ -1,0 +1,14 @@
+// introduce nominal classes for individual names by literally wrapping the individual name in braces
+.decl ind2nom(a: IndividualName, n: ConceptName)
+
+ind2nom(a, noma) :- is_in(a), noma=cat("{", cat(a, "}")).
+
+// define as nominals all those concept names that originate in individuals
+is_nom(nom) :- ind2nom(_, nom).
+
+// introduce some new concept and standpoint names for ABox reasoning
+sharper_nf(snew, s),
+gci_nested(all, noma, s, b, pnew),
+gci_nested(all, pnew, snew, top, b)
+:- is_in(a), gci_nf_diamond_right(_, _, s, b), is_top(top), is_all(all), ind2nom(a, noma), snew=cat("s_", cat(s, cat("[", cat(a, cat(",", cat(b,"]")))))), pnew=cat("p_", cat(s, cat("_", cat(a, cat("_", b))))).
+

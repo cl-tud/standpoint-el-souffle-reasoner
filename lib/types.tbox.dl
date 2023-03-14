@@ -1,0 +1,126 @@
+// TBox axioms
+
+// there are only two modalities
+.type Modality = Box {}
+               | Diamond {}
+
+// concept names are just strings (we use equality instead of subtype here because we newly create concept names)
+.type ConceptName = symbol
+
+// expresses that a given symbol is a concept name (used for checking atomicity)
+.decl is_cn(c: ConceptName)
+
+// a role name is a string (we also create new role names during normalisation)
+.type RoleName = symbol
+
+// expresses that a given symbol is a role name
+.decl is_rn(r: RoleName)
+
+// there are only these forms of concept terms
+.type ConceptTerm = Top {}
+                  | Bottom {}
+                  | Atomic { n: ConceptName }
+                  | Conjunction { c: ConceptTerm, d: ConceptTerm }
+                  | Existential { r: RoleName, c: ConceptTerm }
+                  | Modal { m: Modality, s: StandpointName, c: ConceptTerm }
+                  | ExistsSelf { r: RoleName }
+
+// expresses that something is a concept term occurring in the input (for vocabulary identification and distinction)
+.decl is_ct(c: ConceptTerm)
+
+// expresses that something is a complex concept (i.e. not basic, i.e. either a conjunction, existential restriction or a modalised concept)
+.decl is_cc(c: ConceptTerm)
+
+// rules for recursively (top-down) deriving which terms are concepts, and which of them are complex
+is_ct($Top()).
+is_ct($Bottom()).
+is_cn(c) :- is_ct($Atomic(c)).
+is_ct(c), is_ct(d), is_cc($Conjunction(c, d)) :- is_ct($Conjunction(c, d)).
+is_rn(r), is_ct(c), is_cc($Existential(r, c)) :- is_ct($Existential(r, c)).
+is_sn(s), is_ct(c), is_cc($Modal(m, s, c)) :- is_ct($Modal(m, s, c)).
+is_rn(r) :- is_ct($ExistsSelf(r)).
+
+// for the extracted terms, introduce names for concept terms bottom-up
+.decl ct2name(c: ConceptTerm, n: ConceptName)
+
+ct2name($Top(), "c_top").
+ct2name($Bottom(), "c_bot").
+ct2name($Atomic(n), n) :- is_cn(n).
+// use prefix notation without parentheses for binary constructors
+ct2name($Conjunction(c, d), name) :- is_ct($Conjunction(c, d)), ct2name(c, cn), ct2name(d, dn), name=cat("and_", cat(cn, cat("_", dn))).
+ct2name($Existential(r, c), name) :- is_ct($Existential(r, c)), ct2name(c, cn), name=cat("exists_", cat(r, cat("_", cn))).
+ct2name($Modal(m, s, c), name) :- is_ct($Modal(m, s, c)), ct2name(c, cn), md2name(m, s, mn), name=cat(mn, cn).
+ct2name($ExistsSelf(r), name) :- is_ct($ExistsSelf(r)), role2self(r, name).
+
+// helper predicate for pretty-printing modalised concepts
+.decl md2name(m: Modality, s: StandpointName, n: ConceptName)
+
+md2name($Box(), s, cat("[", cat(s, "]"))) :- is_sn(s).
+md2name($Diamond(), s, cat("<", cat(s, ">"))) :- is_sn(s).
+
+// helper predicate for centrally getting names of self loops
+.decl role2self(r: RoleName, n: ConceptName)
+
+role2self(r, name) :- is_rn(r), name=cat("exists_", cat(r, ".Self")).
+
+// expresses that something is a basic concept
+.decl is_bc(c: ConceptTerm)
+
+is_bc($Top()).
+is_bc($Bottom()).
+is_bc($Atomic(n)) :- is_cn(n).
+is_bc($ExistsSelf(r)) :- is_rn(r).
+
+// helper predicate for checking whether something is basic and obtaining its name in one go
+.decl bc2name(c: ConceptTerm, n: ConceptName)
+
+bc2name(b, n) :- is_bc(b), ct2name(b, n).
+
+// role chains and inclusion axioms
+
+// a role “chain“ either consists of a single role name or is a proper chain
+.type RoleChain = Single { r: RoleName }
+                | Chain { l: RoleName, r: RoleChain }
+                // this is not official input and only used for reversing the order of role names in a chain for technical reasons
+                | Empty {}
+
+// take note of role chains occurring in the input data
+.decl is_rc(r: RoleChain)
+
+// extract vocabulary
+is_rn(r) :- is_rc($Single(r)).
+is_rn(r), is_rc(c) :- is_rc($Chain(r, c)).
+
+// and build new names bottom up
+.decl rc2name(c: RoleChain, n: RoleName)
+
+rc2name($Single(r), r) :- is_rn(r).
+rc2name($Chain(r, c), name) :- is_rc($Chain(r, c)), rc2name(c, cn), name=cat("r_", cat(r, cat("_", cn))).
+
+// GCIs and RIAs
+
+// there are two forms of TBox axioms:
+// general concept inclusions, and
+// role inclusion axioms
+.type TBoxAxiom = GCI { l: ConceptTerm, r: ConceptTerm }
+                | RIA { l: RoleChain, r: RoleName }
+
+// internal representation of normal-form tbox axioms
+// the box modality is implicit (the standpoint name explicit)
+.decl gci(s: StandpointName, l: ConceptTerm, r: ConceptTerm)
+
+// transform predicates and extract vocabulary along the way
+gci(s, l, r) :- kb($Formula($Box(), s, $Lit($Pos($TBox($GCI(l, r)))))).
+is_sn(s), is_ct(l), is_ct(r) :- gci(s, l, r).
+
+// the box modality is again implicit
+.decl ria(s: StandpointName, l: RoleChain, r: RoleName)
+
+ria(s, l, r) :- kb($Formula($Box(), s, $Lit($Pos($TBox($RIA(l, r)))))).
+is_sn(s), is_rc(l), is_rn(r) :- ria(s, l, r).
+
+// name building
+.decl tbox_axiom2name(a: TBoxAxiom, n: symbol)
+
+tbox_axiom2name($GCI(l, r), name) :- is_tbox_axiom($GCI(l, r)), ct2name(l, lname), ct2name(r, rname), name=cat("t_", cat(lname, cat("=<", rname))).
+tbox_axiom2name($RIA(l, r), name) :- is_tbox_axiom($RIA(l, r)), rc2name(l, lname), name=cat("t_", cat(lname, cat("=<", r))).
