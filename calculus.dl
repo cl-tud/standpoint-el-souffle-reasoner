@@ -44,6 +44,9 @@ ria2(all, r, r) :- is_rn(r), is_all(all).
 // (S.3)
 ria2(s, r1, r2) :- ria2(u, r1, r2), sharper_nf(s, u).
 
+// (S.3)
+ria3(s, r1, r2, r3) :- ria3(u, r1, r2, r3), sharper_nf(s, u).
+
 // role subsumptions
 // (R.1)
 ria2(s, r1, r3) :- ria2(s, r1, r2), ria2(s, r2, r3).
