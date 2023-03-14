@@ -10,23 +10,32 @@ gci_nested(all, noma, s, top, c) :- ca_nf(s, c, a), ind2nom(a, noma), is_top(top
 gci_nested(all, noma, s, b, c) :- gci_nested(_, top, s, b, c), is_top(top), is_all(all), is_nom(noma).
 
 // movement along hierarchies
-// (27)
+// (S.3)
 ra_nf(s, r, a1, a2) :- ra_nf(u, r, a1, a2), sharper_nf(s, u).
 
-// (28)
+// individual-based inferences
+// (A.1)
+gci_nested(all, noma, s, b, c) :- gci_nested(_, top, s, b, c), is_nom(noma), is_all(all), is_top(top).
+
+// (A.2)
+gci_nested(all, top, s, noma, c) :- gci_nested(_, noma, s, top, c), is_nom(noma), is_all(all), is_top(top).
+
+// (A.3)
+gci_nested(all, noma, s, b, c) :- gci_nested(_, noma, s, b, c), is_nom(noma), is_all(all).
+
+// roles
+// (A.4)
 ra_nf(s, r1, a1, a2) :- ra_nf(s, r, a1, a2), ria2(s, r, r1).
 
-// (29)
+// (A.5)
 ra_nf(s, r3, a1, a3) :- ra_nf(s, r1, a1, a2), ra_nf(s, r2, a2, a3), ria3(s, r1, r2, r3).
 
 // existential quantifiers
-// (30)
-gci_nested(all, noma, s, top, c) :- ind2nom(a, noma), ind2nom(b, nomb), is_top(top), is_all(all), ra_nf(s, r, a, b), gci_nested(_, nomb, s, top, d), gci_nf_existential_left(s, r, d, c).
+// (A.6)
+gci_nf_existential_right(s, noma, r, c) :- ra_nf(s, r, a, b), ind2nom(a, noma), ind2nom(b, nomb), gci_nested(_, nomb, s, top, c), is_top(top).
 
-// (31)
-gci_nested(all, noma, s, top, ca) :- ind2nom(a, noma), is_top(top), is_all(all), ra_nf(s, r1, a, b), ind2nom(b, nomb), gci_nested(_, nomb, s, top, cb), gci_nf_existential_right(s, cb, r2, cc), ria3(s, r1, r2, r), ria2(s, r, r3), gci_nf_existential_left(s, r3, cc, ca).
+// (A.7)
+gci_nf_existential_right(s, noma, r3, c) :- ra_nf(s, r1, a, b), ind2nom(a, noma), ind2nom(b, nomb), gci_nf_existential_right(s, nomb, r2, c), ria3(s, r1, r2, r3).
 
-// backwards propagation of bottom inferences
-// (32)
-gci_nested(all, top, all, top, bot) :- is_top(top), is_bot(bot), is_all(all), ind2nom(_, noma), gci_nested(_, noma, _, top, bot).
-
+// (A.8)
+gci_nf_existential_right(s, noma, r3, c) :- ra_nf(s, r1, a, b), ind2nom(a, noma), ind2nom(b, nomb), gci_nested(_, nomb, s, top, d), gci_nf_existential_right(s, d, r2, c), ria3(s, r1, r2, r3), is_top(top).

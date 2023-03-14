@@ -1,14 +1,14 @@
 ////////
 // sharpening statements
 
-// (1)
+// (T.1)
 sharper_nf(s, all) :- is_sn(s), is_all(all).
 
-// (1')
+// (T.2)
 sharper_nf(s, s) :- is_sn(s).
 
-// (5)
+// (S.1)
 sharper_nf(s1, s3) :- sharper_nf(s1, s2), sharper_nf(s2, s3).
 
-// (6)
+// (S.2)
 sharper_nf(s, u) :- sharper_nf(s, s1), sharper_nf(s, s2), sharper_intersection_nf(s1, s2, u).

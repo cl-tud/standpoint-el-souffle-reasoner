@@ -1,23 +1,20 @@
 // additional deduction rules for dealing with self loops
 
 // interaction with TBox statements
-// (33)
-gci_nested(all, top, s, r1self, r2self) :- is_top(top), is_all(all), ria2(s, r1, r2), role2self(r1, r1self), role2self(r2, r2self).
+// (L.1)
+ra_nf(s, r, a, a) :- gci_nested(_, noma, s, top, rself), ind2nom(a, noma), is_top(top), role2self(r, rself).
 
-// (34)
-gci_nf_conjunction_left(s, r1self, r2self, r3self) :- ria3(s, r1, r2, r3), role2self(r1, r1self), role2self(r2, r2self), role2self(r3, r3self).
+// (L.2)
+gci_nf_existential_right(s, c, r, c) :- gci_nested(_, top, s, c, rself), is_top(top), role2self(r, rself).
 
-// (1)
-gci_nf_existential_right(s, c, r, c) :- gci_nested(_, top, s, c, rself), role2self(r, rself), is_top(top).
+// (L.3)
+gci_nf_conjunction_left(s, rself, d, c) :- gci_nf_existential_left(s, r, d, c), role2self(r, rself).
 
-// (35)
-gci_nf_existential_right(s, b, r3, d) :- gci_nf_existential_right(s, b, r1, d), role2self(r2, r2self), gci_nested(_, top, s, d, r2self), is_top(top), ria3(s, r1, r2, r3).
-
-// (36)
-gci_nf_existential_right(s, b, r3, d) :- gci_nested(_, top, s, b, r1self), is_top(top), role2self(r1, r1self), gci_nf_existential_right(s, b, r2, d), ria3(s, r1, r2, r3).
-
-// (37)
+// (L.4)
 gci_nested(all, noma, s, top, rself) :- is_top(top), is_all(all), ind2nom(a, noma), ra_nf(s, r, a, a), role2self(r, rself).
 
-// (38)
-ra_nf(s, r, a, a) :- gci_nested(_, noma, s, top, rself), ind2nom(a, noma), is_top(top), role2self(r, rself).
+// (L.5)
+gci_nested(all, top, s, r1self, r2self) :- is_top(top), is_all(all), ria2(s, r1, r2), role2self(r1, r1self), role2self(r2, r2self).
+
+// (L.6)
+gci_nf_conjunction_left(s, r1self, r2self, r3self) :- ria3(s, r1, r2, r3), role2self(r1, r1self), role2self(r2, r2self), role2self(r3, r3self).
