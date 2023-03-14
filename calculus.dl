@@ -24,9 +24,9 @@ is_nom("{_}").
 // nested sequents
 .decl gci_nested(u: StandpointName, b: ConceptName, s: StandpointName, c: ConceptName, d: ConceptName)
 
-.output gci_nested
-
-//.limitsize gci_nested(n=100000)
+// for debugging
+//.output gci_nested
+//.limitsize gci_nested(n=10000)
 
 gci_nested(all, top, s, c, d) :- gci_nf_names(s, c, d), is_all(all), is_top(top).
 

@@ -1,2 +1,3 @@
-$Formula($Diamond, s, $And($Pos($ABox($ConceptAssertion($Atomic(C), a))), $Lit($Pos($ABox($RoleAssertion(r, a, b))))))
-$Formula($Box, all, $Lit($Pos($TBox($GCI($Atomic(C), $Atomic(D))))))
+$Formula($Diamond, s1, $And($Pos($ABox($ConceptAssertion($Atomic(C), a))), $Lit($Pos($ABox($RoleAssertion(r, a, b))))))
+$Formula($Box, s2, $Lit($Pos($TBox($GCI($Atomic(C), $Atomic(D))))))
+$PosSharp($SharperIntersection($Name(s1), s2))

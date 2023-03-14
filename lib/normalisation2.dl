@@ -7,7 +7,7 @@ sharper_nf(s1, s2) :- sharper_intersection($Name(s1), s2).
 // s1 /\ s2 <= s3
 .decl sharper_intersection_nf(s1: StandpointName, s2: StandpointName, s3: StandpointName)
 
-.output sharper_intersection_nf
+//.output sharper_intersection_nf
 
 sharper_intersection_nf(s1, s2, s3) :- sharper_intersection($Intersection(s1, $Name(s2)), s3).
 
@@ -41,7 +41,7 @@ normalise_sharper_disjointness(s2, $Conjunction($Atomic(new), c))
 // l <= r
 .decl ria2(s: StandpointName, l: RoleName, r: RoleName)
 
-.output ria2
+//.output ria2
 
 // the box modality is still implicit in the normal form
 ria2(s, l, r) :- ria(s, $Single(l), r).
@@ -50,7 +50,7 @@ ria2(s, l, r) :- ria(s, $Single(l), r).
 // l1 * l2 <= r
 .decl ria3(s: StandpointName, l1: RoleName, l2: RoleName, r: RoleName)
 
-.output ria3
+//.output ria3
 
 ria3(s, l1, l2, r) :- ria(s, $Chain(l1, $Single(l2)), r).
 
@@ -119,7 +119,7 @@ gci(s, $Conjunction($Modal($Diamond(), v0, $Atomic(new)), $Modal($Diamond(), v1,
 .decl gci_nf(s: StandpointName, l: ConceptTerm, r: ConceptTerm)
 
 // one general predicate for output
-.output gci_nf
+//.output gci_nf
 
 // several specific predicates for reasoning
 
@@ -171,7 +171,7 @@ gci_nf(s, $Existential(r, c), d)
 
 .decl ca_nf(s: StandpointName, c: ConceptName, a: IndividualName)
 
-.output ca_nf
+//.output ca_nf
 
 ca_nf(s, c, a) :- ca(s, $Atomic(c), a).
 
@@ -183,7 +183,7 @@ gci(s, $Atomic(new), c)
 // role assertion normal form: the box is still implicit
 .decl ra_nf(s: StandpointName, r: RoleName, a1: IndividualName, a2: IndividualName)
 
-.output ra_nf
+//.output ra_nf
 
 ra_nf(s, r, a1, a2) :- ra(s, r, a1, a2).
 

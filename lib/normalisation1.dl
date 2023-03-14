@@ -3,7 +3,7 @@
 // s1 <= s2
 .decl sharper_nf(s1: StandpointName, s2: StandpointName)
 
-.output sharper_nf
+//.output sharper_nf
 
 // (11)
 // remove diamonds in front of monomials
