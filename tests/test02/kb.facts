@@ -1,0 +1,4 @@
+$Formula($Diamond, s1, $And($Pos($ABox($ConceptAssertion($Atomic(C), a))),$Lit($Pos($ABox($ConceptAssertion($Atomic(D), a))))))
+$Formula($Box, s3, $Lit($Pos($TBox($GCI($Conjunction($Atomic(C), $Atomic(D)), $Bottom)))))
+$PosSharp($SharperIntersection($Name(s1), s3))
+$PosSharp($SharperIntersection($Name(s2), s3))

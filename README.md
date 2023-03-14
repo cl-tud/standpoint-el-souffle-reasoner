@@ -15,13 +15,13 @@ Via reductions, this can be used to also decide entailment of statements.
 ## Normalisation
 
 The deduction calculus requires the knowledge base to be in a specific normal form.
-The implementation's modules for [phase 1](lib/normalisation1.dl) and [phase 2](lib/normalisation2.dl) take care of normalising input that uses the full expressiveness of Standpoint EL+.
+The implementation's modules for [phase 1](lib/normalisation1.dl) and [phase 2](lib/normalisation2.dl) normalisation rules take care of normalising input that uses the full expressiveness of Standpoint EL+.
 
 ## Input language
 
 The input to the calculus is provided as a list of facts for the predicate `kb`.
 The concrete syntax to be used is declared in [types.dl](lib/types.dl).
-An [example](tests/test01/kb.facts) is available.
+Two small examples are available, one [satisfiable](tests/test01/kb.facts), the other [unsatisfiable](tests/test02/kb.facts).
 
 ## Output
 
