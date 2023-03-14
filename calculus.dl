@@ -112,7 +112,7 @@ gci_nf_diamond_right(t, c, s, e) :- gci_nf_diamond_right(t, c, u, d), gci_nf_dia
 gci_nf_existential_right(s, c, r2, e) :- gci_nf_existential_right(s, c, r1, d), gci_nested(_, top, s, d, e), ria2(s, r1, r2), is_top(top).
 
 // (E.2)
-gci_nf_existential_right(s, c, r3, e) :- gci_nf_existential_left(s, c, r1, d), gci_nf_existential_right(s, d, r2, e), ria3(s, r1, r2, r3).
+gci_nf_existential_right(s, c, r3, e) :- gci_nf_existential_right(s, c, r1, d), gci_nf_existential_right(s, d, r2, e), ria3(s, r1, r2, r3).
 
 // (E.3)
 gci_nested(all, top, s, c, f) :- gci_nf_existential_right(s, c, r, d), gci_nf_existential_left(s, r, d, f), is_top(top), is_all(all).
