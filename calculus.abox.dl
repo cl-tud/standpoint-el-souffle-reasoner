@@ -6,8 +6,6 @@
 gci_nested(all, noma, s, top, c) :- ca_nf(s, c, a), ind2nom(a, noma), is_top(top), is_all(all).
 
 // additional deduction rules for ABox reasoning
-// (39)
-gci_nested(all, noma, s, b, c) :- gci_nested(_, top, s, b, c), is_top(top), is_all(all), is_nom(noma).
 
 // movement along hierarchies
 // (S.3)
